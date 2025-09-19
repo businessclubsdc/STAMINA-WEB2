@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulaire Business Club + Paiement</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Script Touchpoint -->
+  <script src="https://touchpay.gutouch.net/touchpayv2/script/touchpaynr/prod_touchpay-0.0.1.js" type="text/javascript"></script>
+
+  <!-- Script EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; background-color: #fff; margin: 0; padding: 10px; }
+    form { background-color: #fff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; }
+    label { font-weight: bold; display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; }
+    button { background-color: #007aff; color: white; padding: 10px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; }
+    button:hover { background-color: #005bb5; }
+    .hidden { display: none; }
+    #confirmation-message { display: none; text-align: center; padding: 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<form id="myForm">
+  <input type="hidden" id="MemberID" name="MemberID">
+
+  <label for="name">Nom et prénom :</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="gender">Sexe :</label>
+  <select id="gender" name="gender" required>
+    <option value=""></option>
+    <option value="Homme">Homme</option>
+    <option value="Femme">Femme</option>
+  </select>
+
+  <label for="birthdate">Date de naissance :</label>
+  <input type="date" id="birthdate" name="birthdate" required>
+
+  <label for="nationality">Nationalité :</label>
+  <input type="text" id="nationality" name="nationality" required>
+
+  <label for="phone">Téléphone :</label>
+  <input type="tel" id="phone" name="phone" required>
+
+  <label for="email">Adresse e-mail :</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="education_level">Niveau scolaire :</label>
+  <select id="education_level" name="education_level" required>
+    <option value=""></option>
+    <option value="LICENCE 1">LICENCE 1</option>
+    <option value="LICENCE 2">LICENCE 2</option>
+    <option value="LICENCE 3">LICENCE 3</option>
+    <option value="MASTER 1">MASTER 1</option>
+    <option value="MASTER 2">MASTER 2</option>
+    <option value="AUTRE">AUTRE</option>
+  </select>
+  <input type="text" id="other_education_level" name="other_education_level" class="hidden" placeholder="Autre niveau">
+
+  <label for="department">Département scolaire :</label>
+  <select id="department" name="department" required>
+    <option value="ECONOMIE">ECONOMIE</option>
+    <option value="IST">IST</option>
+    <option value="ESITEC">ESITEC</option>
+    <option value="MERCURE">MERCURE</option>
+    <option value="IMAP">IMAP</option>
+    <option value="UQAM">UQAM</option>
+    <option value="DROIT">DROIT</option>
+    <option value="PROFESSIONNEL(LE)">PROFESSIONNEL(LE)</option>
+    <option value="AUTRE">AUTRE</option>
+  </select>
+  <input type="text" id="other_department" name="other_department" class="hidden" placeholder="Autre département">
+
+  <label for="school">École :</label>
+  <select id="school" name="school" required>
+    <option value=""></option>
+    <option value="SUPDECO">SUPDECO</option>
+    <option value="AUTRE">AUTRE</option>
+  </select>
+  <input type="text" id="other_school" name="other_school" class="hidden" placeholder="Autre école">
+
+  <label for="Job">Département du club :</label>
+  <select id="Job" name="Job" required>
+    <option value=""></option>
+    <option value="DIGITAL">DIGITAL</option>
+    <option value="FINANCE">FINANCE</option>
+    <option value="AUTRE">AUTRE</option>
+  </select>
+  <input type="text" id="other_Job" name="other_Job" class="hidden" placeholder="Autre département club">
+
+  <button type="button" onclick="validateAndPay()">Envoyer et Payer</button>
+</form>
+
+<div id="confirmation-message">
+  <p>✅ Paiement confirmé et vos informations ont été enregistrées.</p>
+</div>
+
+<script>
+  /* ================= CONFIG ================= */
+  const MAKE_WEBHOOK = "https://hook.us2.make.com/u5b9t64f0p67oyd8aj381k463stv3tvq";
+  const MERCHANT_ID = "STAMI25753";
+  const MERCHANT_TOKEN = "QWCRU6qkjB6BEN7LlAEGFL9cOG9PPkQztmmdv81rgNzPfjQbji";
+  const DOMAIN = "stamina.sn";
+  const PAYMENT_AMOUNT = 2;
+
+  // Init EmailJS
+  emailjs.init("jDP_quiL9Ze-wptPf");
+
+  /* ================= FORM ================= */
+  function validateAndPay() {
+    const required = ["name", "gender", "birthdate", "nationality", "phone", "email", "education_level", "department", "school", "Job"];
+    let valid = required.every(id => document.getElementById(id).value.trim() !== "");
+    if (!valid) {
+      alert("Veuillez remplir tous les champs requis.");
+      return;
+    }
+
+    const memberID = "M" + Math.floor(10000 + Math.random() * 90000);
+    document.getElementById("MemberID").value = memberID;
+
+    // ✅ Envoi vers Make avec StatutPaiement = "En attente"
+    const dataPending = collectFormData(memberID, "En attente");
+    fetch(MAKE_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dataPending)
+    });
+
+    // ✅ Ensuite on lance le paiement
+    calltouchpay(memberID);
+  }
+
+  /* ================= COLLECT DATA ================= */
+  function collectFormData(memberID, statutPaiement) {
+    return {
+      MemberID: memberID,
+      SubmitDate: new Date().toLocaleString(),
+      Name: document.getElementById("name").value,
+      Gender: document.getElementById("gender").value,
+      BirthDate: document.getElementById("birthdate").value,
+      Country: document.getElementById("nationality").value,
+      Phone: document.getElementById("phone").value,
+      Email: document.getElementById("email").value,
+      Educationlevel: document.getElementById("education_level").value,
+      Department: document.getElementById("department").value,
+      School: document.getElementById("school").value,
+      Job: document.getElementById("Job").value,
+      StatutPaiement: statutPaiement  // ✅ défini correctement
+    };
+  }
+
+  /* ================= TOUCHPOINT + CALLBACK ================= */
+  function calltouchpay(memberID) {
+    sendPaymentInfos(
+      new Date().getTime(),
+      MERCHANT_ID,
+      MERCHANT_TOKEN,
+      DOMAIN,
+      '', '',
+      PAYMENT_AMOUNT,
+      'Dakar', '', '', '', '',
+      "",
+      function callback(paymentResponse) {
+        console.log("Callback Touchpoint reçu :", paymentResponse);
+
+        if (paymentResponse && paymentResponse.status === "SUCCESS") {
+          // ✅ Mise à jour : StatutPaiement = "Payé"
+          const dataPaid = collectFormData(memberID, "Payé");
+          fetch(MAKE_WEBHOOK, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataPaid)
+          }).then(() => {
+            document.getElementById("myForm").style.display = "none";
+            document.getElementById("confirmation-message").style.display = "block";
+
+            // 📧 Email de bienvenue
+            emailjs.send("service_sk94iy5", "template_xnfp28g", {
+              to_email: document.getElementById("email").value,
+              name: document.getElementById("name").value
+            }).then(() => {
+              console.log("✅ Email de bienvenue envoyé !");
+            }).catch(err => {
+              console.error("❌ Erreur email:", err);
+            });
+          });
+        } else {
+          // ❌ Paiement échoué ou annulé → Mise à jour en "Annulé"
+          const dataCancelled = collectFormData(memberID, "Annulé");
+          fetch(MAKE_WEBHOOK, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataCancelled)
+          });
+          alert("❌ Paiement annulé ou échoué.");
+        }
+      }
+    );
+  }
+</script>
+
+</body>
+</html>
