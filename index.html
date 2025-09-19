@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Script Touchpoint -->
-  <script src="https://touchpay.gutouch.net/touchpayv2/script/touchpaynr/prod_touchpay-0.0.1.js" type="text/javascript"></script>
+  <script src="https://touchpay.gutouch.net/touchpayv2/script/touchpaynr/prod_touchpay-0.0.1.js"></script>
 
   <!-- Script EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -101,7 +102,7 @@
 
 <script>
   /* ================= CONFIG ================= */
-  const MAKE_WEBHOOK = "https://hook.us2.make.com/u5b9t64f0p67oyd8aj381k463stv3tvq";
+  const MAKE_WEBHOOK = "https://hook.us2.make.com/u5b9t64f0p67oyd8aj381k463stv3tvq"; // 🔗 Ton webhook Make
   const MERCHANT_ID = "STAMI25753";
   const MERCHANT_TOKEN = "QWCRU6qkjB6BEN7LlAEGFL9cOG9PPkQztmmdv81rgNzPfjQbji";
   const DOMAIN = "stamina.sn";
@@ -122,21 +123,8 @@
     const memberID = "M" + Math.floor(10000 + Math.random() * 90000);
     document.getElementById("MemberID").value = memberID;
 
-    // ✅ Envoi vers Make avec StatutPaiement = "En attente"
-    const dataPending = collectFormData(memberID, "En attente");
-    fetch(MAKE_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dataPending)
-    });
-
-    // ✅ Ensuite on lance le paiement
-    calltouchpay(memberID);
-  }
-
-  /* ================= COLLECT DATA ================= */
-  function collectFormData(memberID, statutPaiement) {
-    return {
+    // ✅ Envoi vers Make (statut bien défini)
+    const data = {
       MemberID: memberID,
       SubmitDate: new Date().toLocaleString(),
       Name: document.getElementById("name").value,
@@ -149,11 +137,23 @@
       Department: document.getElementById("department").value,
       School: document.getElementById("school").value,
       Job: document.getElementById("Job").value,
-      StatutPaiement: statutPaiement  // ✅ défini correctement
+      StatutPaiement: "En attente" // 🔑 Champ bien défini
     };
+
+    fetch(MAKE_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+    .then(res => {
+      console.log("✅ Données envoyées à Make :", data);
+      // Lance le paiement après envoi
+      calltouchpay(memberID);
+    })
+    .catch(err => console.error("❌ Erreur Make :", err));
   }
 
-  /* ================= TOUCHPOINT + CALLBACK ================= */
+  /* ================= TOUCHPOINT ================= */
   function calltouchpay(memberID) {
     sendPaymentInfos(
       new Date().getTime(),
@@ -162,43 +162,7 @@
       DOMAIN,
       '', '',
       PAYMENT_AMOUNT,
-      'Dakar', '', '', '', '',
-      "",
-      function callback(paymentResponse) {
-        console.log("Callback Touchpoint reçu :", paymentResponse);
-
-        if (paymentResponse && paymentResponse.status === "SUCCESS") {
-          // ✅ Mise à jour : StatutPaiement = "Payé"
-          const dataPaid = collectFormData(memberID, "Payé");
-          fetch(MAKE_WEBHOOK, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dataPaid)
-          }).then(() => {
-            document.getElementById("myForm").style.display = "none";
-            document.getElementById("confirmation-message").style.display = "block";
-
-            // 📧 Email de bienvenue
-            emailjs.send("service_sk94iy5", "template_xnfp28g", {
-              to_email: document.getElementById("email").value,
-              name: document.getElementById("name").value
-            }).then(() => {
-              console.log("✅ Email de bienvenue envoyé !");
-            }).catch(err => {
-              console.error("❌ Erreur email:", err);
-            });
-          });
-        } else {
-          // ❌ Paiement échoué ou annulé → Mise à jour en "Annulé"
-          const dataCancelled = collectFormData(memberID, "Annulé");
-          fetch(MAKE_WEBHOOK, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dataCancelled)
-          });
-          alert("❌ Paiement annulé ou échoué.");
-        }
-      }
+      'Dakar', '', '', '', ''
     );
   }
 </script>
