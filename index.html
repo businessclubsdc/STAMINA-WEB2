@@ -101,11 +101,11 @@
 
 <script>
   /* ================= CONFIG ================= */
-  const MAKE_WEBHOOK = "https://hook.us2.make.com/u5b9t64f0p67oyd8aj381k463stv3tvq";
+  const MAKE_WEBHOOK = "https://hook.us2.make.com/n8jbm3yl7tx6v9f2ua37p1o01n808w7";
   const MERCHANT_ID = "STAMI25753";
   const MERCHANT_TOKEN = "QWCRU6qkjB6BEN7LlAEGFL9cOG9PPkQztmmdv81rgNzPfjQbji";
   const DOMAIN = "stamina.sn";
-  const PAYMENT_AMOUNT = 2;
+  const PAYMENT_AMOUNT = 3; // ✅ Montant modifié à 3 F CFA
 
   // Init EmailJS
   emailjs.init("jDP_quiL9Ze-wptPf");
@@ -135,7 +135,7 @@
   }
 
   /* ================= COLLECT DATA ================= */
-  function collectFormData(memberID, statut) {
+  function collectFormData(memberID, statutPaiement) {
     return {
       MemberID: memberID,
       SubmitDate: new Date().toLocaleString(),
@@ -149,11 +149,11 @@
       Department: document.getElementById("department").value,
       School: document.getElementById("school").value,
       Job: document.getElementById("Job").value,
-      StatutPaiement: statut
+      StatutPaiement: statutPaiement
     };
   }
 
-  /* ================= TOUCHPOINT + REDIRECT ================= */
+  /* ================= TOUCHPOINT + CALLBACK ================= */
   function calltouchpay(memberID) {
     sendPaymentInfos(
       new Date().getTime(),
@@ -163,12 +163,61 @@
       '', '',
       PAYMENT_AMOUNT,
       'Dakar', '', '', '', '',
-      // ✅ Redirection vers success.html avec MemberID
-      window.location.origin + "/success.html?success=true&memberID=" + memberID
+      "",
+      function callback(paymentResponse) {
+        console.log("Callback Touchpoint reçu :", paymentResponse);
+
+        let statutFinal = "En attente"; // par défaut
+
+        switch (paymentResponse.status) {
+          case "SUCCESS":
+            statutFinal = "Payé";
+            alert("✅ Paiement validé avec succès !");
+            break;
+          case "FAILED":
+            statutFinal = "En attente";
+            alert("❌ Paiement échoué. Veuillez réessayer.");
+            break;
+          case "CANCELLED":
+            statutFinal = "Annulé";
+            alert("🚫 Paiement annulé par l’utilisateur.");
+            break;
+          case "PENDING":
+            statutFinal = "En attente";
+            alert("⏳ Paiement en cours... Merci de patienter.");
+            break;
+          default:
+            statutFinal = "Erreur";
+            alert("⚠ Erreur inconnue, contactez le support.");
+            break;
+        }
+
+        // ✅ Mise à jour Airtable via Make
+        const dataUpdate = collectFormData(memberID, statutFinal);
+        fetch(MAKE_WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataUpdate)
+        }).then(() => {
+          if (statutFinal === "Payé") {
+            document.getElementById("myForm").style.display = "none";
+            document.getElementById("confirmation-message").style.display = "block";
+
+            // 📧 Email de bienvenue
+            emailjs.send("service_sk94iy5", "template_xnfp28g", {
+              to_email: document.getElementById("email").value,
+              name: document.getElementById("name").value
+            }).then(() => {
+              console.log("✅ Email de bienvenue envoyé !");
+            }).catch(err => {
+              console.error("❌ Erreur email:", err);
+            });
+          }
+        });
+      }
     );
   }
 </script>
 
 </body>
 </html>
-
