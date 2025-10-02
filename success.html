@@ -2,64 +2,79 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Paiement Réussi</title>
+  <title>Confirmation Paiement</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #e5f8e0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f4f9;
       text-align: center;
       padding: 50px;
     }
-      color: #2e7d32;
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: auto;
+    }
+    h1 {
+      color: #007aff;
     }
     p {
       font-size: 18px;
+      margin: 10px 0;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-
-  <h1>✅ Paiement Réussi !</h1>
-  <p>Merci pour votre inscription.</p>
-  <p>Nous avons bien reçu votre paiement.</p>
-  <p><strong>ID Membre :</strong> <span id="idDisplay"></span></p>
+  <div class="container">
+    <h1>Confirmation du Paiement</h1>
+    <p id="member-id-display">Vérification en cours...</p>
+  </div>
 
   <script>
-    // 1. Extraire le MemberID depuis l’URL
-    const params = new URLSearchParams(window.location.search);
-    const memberID = params.get("memberID");
+    // Ton Webhook Make
+    const MAKE_WEBHOOK = "https://hook.us2.make.com/n8jbm3yl7tx6v9f2ua37p1o01n808w7";
 
-    // 2. Afficher le MemberID sur la page
-    document.getElementById("idDisplay").innerText = memberID ?? "Inconnu";
+    function checkSuccessRedirect() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const success = urlParams.get("success");
+      const memberID = urlParams.get("memberID");
 
-    // 3. Appeler Make pour valider le paiement
-    if (memberID) {
-      fetch("https://hook.us2.make.com/n8jbm3yl7tx6v9f2ua37p1o01ln808w7", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          MemberID: memberID,
-          StatutPaiement: "Payé"
+      if (success === "true" && memberID) {
+        // ✅ Envoi à Make pour MAJ statut
+        fetch(MAKE_WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ MemberID: memberID, StatutPaiement: "Payé" })
         })
-      })
-      .then(response => {
-        if (!response.ok) {
-          alert("Une erreur est survenue lors de la validation du paiement.");
-        }
-      })
-      .catch(error => {
-        console.error("Erreur lors de l'envoi à Make :", error);
-      });
-    } else {
-      alert("Aucun ID Membre détecté dans l'URL.");
+        .then(() => {
+          document.getElementById("member-id-display").innerHTML =
+            "✅ Paiement confirmé pour l'ID Membre : <span class='success'>" + memberID + "</span>";
+        })
+        .catch(err => {
+          console.error("Erreur webhook Make:", err);
+          document.getElementById("member-id-display").innerHTML =
+            "⚠ Paiement reçu mais erreur de mise à jour dans Airtable.";
+        });
+      } else {
+        document.getElementById("member-id-display").innerHTML =
+          "❌ ID Membre : Inconnu. Paiement non validé.";
+      }
     }
+
+    checkSuccessRedirect();
   </script>
-
 </body>
-
 </html>
-
-
