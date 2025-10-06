@@ -2,80 +2,100 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Confirmation Paiement</title>
+  <title>Paiement confirmé - Business Club</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #f4f4f9;
+      background: #f6f7fb;
       text-align: center;
-      padding: 50px;
+      margin: 0;
+      padding: 40px;
     }
     .container {
       background: #fff;
-      padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 30px;
       max-width: 500px;
       margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    h1 {
-      color: #007aff;
-    }
-    p {
-      font-size: 18px;
-      margin: 10px 0;
-    }
-    .success {
-      color: green;
-      font-weight: bold;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-    }
+    h1 { color: #007aff; }
+    p { color: #333; }
+    .loading { color: #777; margin-top: 20px; }
   </style>
 </head>
 <body>
+
   <div class="container">
-    <h1>Confirmation du Paiement</h1>
-    <p id="member-id-display">Vérification en cours...</p>
+    <h1>✅ Paiement confirmé</h1>
+    <p>Merci pour votre inscription au <strong>Business Club</strong>.</p>
+    <p>Votre paiement a bien été enregistré.</p>
+    <p id="member-info" class="loading">Chargement de vos informations...</p>
   </div>
 
   <script>
-    // Ton Webhook Make
+    // === CONFIGURATION ===
     const MAKE_WEBHOOK = "https://hook.us2.make.com/n8jbm3yl7tx6v9f2ua37p1o01n808w7";
 
-    function checkSuccessRedirect() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const success = urlParams.get("success");
-      const memberID = urlParams.get("memberID");
+    emailjs.init("jDP_quiL9Ze-wptPf");
 
-      if (success === "true" && memberID) {
-        // ✅ Envoi à Make pour MAJ statut
-        fetch(MAKE_WEBHOOK, {
+    async function updatePaymentStatus() {
+      const params = new URLSearchParams(window.location.search);
+      const memberID = params.get("memberID");
+
+      if (!memberID) {
+        document.getElementById("member-info").textContent = "ID membre introuvable.";
+        return;
+      }
+
+      // ✅ Mise à jour Make → Airtable
+      const data = {
+        MemberID: memberID,
+        StatutPaiement: "Payé",
+        ConfirmationDate: new Date().toLocaleString()
+      };
+
+      try {
+        const res = await fetch(MAKE_WEBHOOK, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ MemberID: memberID, StatutPaiement: "Payé" })
-        })
-        .then(() => {
-          document.getElementById("member-id-display").innerHTML =
-            "✅ Paiement confirmé pour l'ID Membre : <span class='success'>" + memberID + "</span>";
-        })
-        .catch(err => {
-          console.error("Erreur webhook Make:", err);
-          document.getElementById("member-id-display").innerHTML =
-            "⚠ Paiement reçu mais erreur de mise à jour dans Airtable.";
+          body: JSON.stringify(data)
         });
-      } else {
-        document.getElementById("member-id-display").innerHTML =
-          "❌ ID Membre : Inconnu. Paiement non validé.";
+
+        if (res.ok) {
+          console.log("✅ Statut 'Payé' envoyé à Make (200 OK)");
+          document.getElementById("member-info").textContent =
+            Votre ID membre est ${memberID}. Statut : PAYÉ ✅;
+
+          // 📧 Envoi d’un mail de bienvenue automatique
+          emailjs.send("service_sk94iy5", "template_xnfp28g", {
+            to_email: "businessclub.sdc@gmail.com",
+            name: memberID
+          }).then(() => {
+            console.log("📧 Email de confirmation envoyé !");
+          }).catch(err => {
+            console.error("Erreur EmailJS :", err);
+          });
+
+        } else {
+          console.error("❌ Erreur HTTP Make:", res.status);
+          document.getElementById("member-info").textContent =
+            "Erreur lors de la confirmation du paiement.";
+        }
+      } catch (err) {
+        console.error("🚫 Erreur de connexion à Make:", err);
+        document.getElementById("member-info").textContent =
+          "Impossible de mettre à jour votre paiement.";
       }
     }
 
-    checkSuccessRedirect();
+    updatePaymentStatus();
   </script>
+
 </body>
 </html>
-
