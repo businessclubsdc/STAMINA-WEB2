@@ -12,14 +12,36 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
-    body { font-family: 'Poppins', sans-serif; background-color: #fff; margin: 0; padding: 10px; }
-    form { background-color: #fff; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0; padding: 10px;
+    }
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: 30px auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
     label { font-weight: bold; display: block; margin-top: 10px; }
-    input, select { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; }
-    button { background-color: #007aff; color: white; padding: 10px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; }
+    input, select {
+      width: 100%; padding: 10px; margin: 5px 0 15px;
+      border-radius: 5px; border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007aff; color: white;
+      padding: 10px; border: none;
+      border-radius: 5px; font-size: 16px;
+      cursor: pointer; width: 100%;
+    }
     button:hover { background-color: #005bb5; }
     .hidden { display: none; }
-    #confirmation-message { display: none; text-align: center; padding: 20px; font-size: 16px; }
+    #confirmation-message {
+      display: none; text-align: center;
+      padding: 20px; font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -28,29 +50,29 @@
   <input type="hidden" id="MemberID" name="MemberID">
 
   <label for="name">Nom et prénom :</label>
-  <input type="text" id="name" name="name" required>
+  <input type="text" id="name" required>
 
   <label for="gender">Sexe :</label>
-  <select id="gender" name="gender" required>
+  <select id="gender" required>
     <option value=""></option>
     <option value="Homme">Homme</option>
     <option value="Femme">Femme</option>
   </select>
 
   <label for="birthdate">Date de naissance :</label>
-  <input type="date" id="birthdate" name="birthdate" required>
+  <input type="date" id="birthdate" required>
 
   <label for="nationality">Nationalité :</label>
-  <input type="text" id="nationality" name="nationality" required>
+  <input type="text" id="nationality" required>
 
   <label for="phone">Téléphone :</label>
-  <input type="tel" id="phone" name="phone" required>
+  <input type="tel" id="phone" required>
 
   <label for="email">Adresse e-mail :</label>
-  <input type="email" id="email" name="email" required>
+  <input type="email" id="email" required>
 
   <label for="education_level">Niveau scolaire :</label>
-  <select id="education_level" name="education_level" required>
+  <select id="education_level" required>
     <option value=""></option>
     <option value="LICENCE 1">LICENCE 1</option>
     <option value="LICENCE 2">LICENCE 2</option>
@@ -59,10 +81,9 @@
     <option value="MASTER 2">MASTER 2</option>
     <option value="AUTRE">AUTRE</option>
   </select>
-  <input type="text" id="other_education_level" name="other_education_level" class="hidden" placeholder="Autre niveau">
 
   <label for="department">Département scolaire :</label>
-  <select id="department" name="department" required>
+  <select id="department" required>
     <option value="ECONOMIE">ECONOMIE</option>
     <option value="IST">IST</option>
     <option value="ESITEC">ESITEC</option>
@@ -73,24 +94,21 @@
     <option value="PROFESSIONNEL(LE)">PROFESSIONNEL(LE)</option>
     <option value="AUTRE">AUTRE</option>
   </select>
-  <input type="text" id="other_department" name="other_department" class="hidden" placeholder="Autre département">
 
   <label for="school">École :</label>
-  <select id="school" name="school" required>
+  <select id="school" required>
     <option value=""></option>
     <option value="SUPDECO">SUPDECO</option>
     <option value="AUTRE">AUTRE</option>
   </select>
-  <input type="text" id="other_school" name="other_school" class="hidden" placeholder="Autre école">
 
   <label for="Job">Département du club :</label>
-  <select id="Job" name="Job" required>
+  <select id="Job" required>
     <option value=""></option>
     <option value="DIGITAL">DIGITAL</option>
     <option value="FINANCE">FINANCE</option>
     <option value="AUTRE">AUTRE</option>
   </select>
-  <input type="text" id="other_Job" name="other_Job" class="hidden" placeholder="Autre département club">
 
   <button type="button" onclick="validateAndPay()">Envoyer et Payer</button>
 </form>
@@ -104,17 +122,17 @@
   const MAKE_WEBHOOK = "https://hook.us2.make.com/n8jbm3yl7tx6v9f2ua37p1o01n808w7";
   const MERCHANT_ID = "STAMI25753";
   const MERCHANT_TOKEN = "QWCRU6qkjB6BEN7LlAEGFL9cOG9PPkQztmmdv81rgNzPfjQbji";
-  const DOMAIN = "stamina.sn";
-  const PAYMENT_AMOUNT = 2; // ✅ Montant modifié à 2 F CFA
+  const DOMAIN = "endpoint-touchpoint-lwjwunpaq-business-clubs-projects.vercel.app";  // Ton domaine Vercel
+  const PAYMENT_AMOUNT = 2;  // 2 F CFA
 
-  // Init EmailJS
+  // Initialisation EmailJS
   emailjs.init("jDP_quiL9Ze-wptPf");
 
-  /* ================= FORM ================= */
+  /* ================= FONCTION DE VALIDATION ================= */
   function validateAndPay() {
-    const required = ["name", "gender", "birthdate", "nationality", "phone", "email", "education_level", "department", "school", "Job"];
-    let valid = required.every(id => document.getElementById(id).value.trim() !== "");
-    if (!valid) {
+    const requiredFields = ["name", "gender", "birthdate", "nationality", "phone", "email", "education_level", "department", "school", "Job"];
+    const allFilled = requiredFields.every(id => document.getElementById(id).value.trim() !== "");
+    if (!allFilled) {
       alert("Veuillez remplir tous les champs requis.");
       return;
     }
@@ -122,19 +140,24 @@
     const memberID = "M" + Math.floor(10000 + Math.random() * 90000);
     document.getElementById("MemberID").value = memberID;
 
-    // ✅ Envoi vers Make avec "En attente"
+    // Envoi “En attente” à Make
     const dataPending = collectFormData(memberID, "En attente");
     fetch(MAKE_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dataPending)
+    })
+    .then(() => {
+      console.log("Envoyé à Make (En attente)");
+      // Lancer Touchpoint
+      calltouchpay(memberID);
+    })
+    .catch(err => {
+      console.error("Erreur vers Make :", err);
     });
-
-    // ✅ Ensuite on lance le paiement
-    calltouchpay(memberID);
   }
 
-  /* ================= COLLECT DATA ================= */
+  /* ================= CONSTRUCTION DES DONNÉES ================= */
   function collectFormData(memberID, statutPaiement) {
     return {
       MemberID: memberID,
@@ -153,72 +176,25 @@
     };
   }
 
-  /* ================= TOUCHPOINT + CALLBACK ================= */
+  /* ================= TOUCHPOINT ================= */
   function calltouchpay(memberID) {
-    sendPaymentInfos(
-      new Date().getTime(),
-      MERCHANT_ID,
-      MERCHANT_TOKEN,
-      DOMAIN,
-      '', '',
-      PAYMENT_AMOUNT,
-      'Dakar', '', '', '', '',
-      "",
-      function callback(paymentResponse) {
-        console.log("Callback Touchpoint reçu :", paymentResponse);
-
-        let statutFinal = "En attente"; // par défaut
-
-        switch (paymentResponse.status) {
-          case "SUCCESS":
-            statutFinal = "Payé";
-            alert("✅ Paiement validé avec succès !");
-            break;
-          case "FAILED":
-            statutFinal = "En attente";
-            alert("❌ Paiement échoué. Veuillez réessayer.");
-            break;
-          case "CANCELLED":
-            statutFinal = "Annulé";
-            alert("🚫 Paiement annulé par l’utilisateur.");
-            break;
-          case "PENDING":
-            statutFinal = "En attente";
-            alert("⏳ Paiement en cours... Merci de patienter.");
-            break;
-          default:
-            statutFinal = "Erreur";
-            alert("⚠ Erreur inconnue, contactez le support.");
-            break;
-        }
-
-        // ✅ Mise à jour Airtable via Make
-        const dataUpdate = collectFormData(memberID, statutFinal);
-        fetch(MAKE_WEBHOOK, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataUpdate)
-        }).then(() => {
-          if (statutFinal === "Payé") {
-            document.getElementById("myForm").style.display = "none";
-            document.getElementById("confirmation-message").style.display = "block";
-
-            // 📧 Email de bienvenue
-            emailjs.send("service_sk94iy5", "template_xnfp28g", {
-              to_email: document.getElementById("email").value,
-              name: document.getElementById("name").value
-            }).then(() => {
-              console.log("✅ Email de bienvenue envoyé !");
-            }).catch(err => {
-              console.error("❌ Erreur email:", err);
-            });
-          }
-        });
-      }
-    );
+    try {
+      sendPaymentInfos(
+        new Date().getTime(),
+        MERCHANT_ID,
+        MERCHANT_TOKEN,
+        DOMAIN,
+        '', '',
+        PAYMENT_AMOUNT,
+        'Dakar', '', '', '', '',
+        // Redirection après paiement vers success.html
+        https://${DOMAIN}/success.html?memberID=${memberID}
+      );
+    } catch (err) {
+      console.error("Erreur lancement Touchpoint :", err);
+    }
   }
 </script>
 
 </body>
 </html>
-
